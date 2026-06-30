@@ -4,12 +4,20 @@ let locationInput = document.getElementById("location_search");
 let locationButton = document.getElementById("search_location_button");
 let locationDetails = document.getElementById("location-details");
 let tempDetails = document.getElementById("temp-details");
+let feelsLikeDetails = document.getElementById("feels-like");
+let humidityDetails = document.getElementById("humidity");
+let windDetails = document.getElementById("wind");
+let precipitationDetails = document.getElementById("precipitation");
+let result;
 
-locationButton.addEventListener("click", searchLocationData);
+locationButton.addEventListener("click", () => {
+    searchLocationData(locationInput.value);
+});
 
 
 
 
+/*
 let result = {
    "location": {
        "name": "Paris",
@@ -5559,23 +5567,42 @@ let result = {
        ]
    }
 };
+*/
 
-async function searchLocationData(){
+async function loadDefaultWeather(){
+    let currentLocation;
+   navigator.geolocation.getCurrentPosition((position)=> {
+       currentLocation = `${position.coords.latitude},${position.coords.longitude}`; 
+        searchLocationData(currentLocation);
+    });
+   
+}
+
+async function searchLocationData(location){
 
    try{
 
-      let response = await fetch(API_URL+"?key="+API_KEY+"&q="+locationInput.value+"&days="+5);
+      let response = await fetch(API_URL+"?key="+API_KEY+"&q="+location+"&days="+5);
 
       if(!response.ok){
          throw new Error(`http Error : ${response.status}`)
       }
 
-      let data = await response.json();
-      console.log(data);
+       result = await response.json();
+      
+       if(result){
+        displayLocationInformation();
+        displayTempInformation();
+        displayFeelsLikeDetails();
+       }else{
+            throw new Error(`Error displaying location weather`);
+       }
+
+
 
    }catch(error){
 
-      console.log(error);
+      alert(error);
    }
 
 }
@@ -5601,7 +5628,13 @@ function displayTempInformation(){
     `;
 }
 
-displayLocationInformation();
-displayTempInformation();
+function displayFeelsLikeDetails(){
+    feelsLikeDetails.innerHTML = result.current.feelslike_c+" &deg;";
+    humidityDetails.innerText = result.current.humidity+"%";
+    windDetails.innerText = result.current.wind_kph + "km/h";
+    precipitationDetails.innerText = result.current.precip_mm + "mm";
+}
+
+loadDefaultWeather();
 
 //        <i class="fa-solid fa-sun text-yellow-300 text-5xl mb-4"></i>
